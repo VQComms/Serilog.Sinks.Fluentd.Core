@@ -9,7 +9,16 @@ namespace sample
             var log = new LoggerConfiguration()
                 .WriteTo.Fluentd()
                 .CreateLogger();
-            log.Information("Test");
+            log.Information("Sample Log Entry");
+            log.Information("Sample Log Entry");
+            log.Information("Sample Log Entry");
+            log.Information("Sample Log Entry");
+            log.Information("Sample Log Entry");
+            log.Information("Sample Log Entry");
+            log.Information("Sample Log Entry");
+            log.Information("Sample Log Entry");
+            log.Information("Sample Log Entry");
+
         }
     }
 }
