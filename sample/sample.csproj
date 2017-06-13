@@ -4,9 +4,6 @@
     <TargetFramework>netcoreapp1.1</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\src\serilog.fluentd.csproj">
-      <Project>{15fe7285-6e7c-43c1-a2e8-34b73db046e2}</Project>
-      <Name>serilog.fluentd</Name>
-    </ProjectReference>
+    <ProjectReference Include="..\src\serilog.fluentd.csproj" />
   </ItemGroup>
 </Project>
