@@ -13,7 +13,7 @@ namespace Serilog.fluentd
         public class FluentdHandlerSettings
         {
             public string Tag { get; set; }
-            public IPAddress Host { get; set; }
+            public string Host { get; set; }
             public int Port { get; set; }
             public int MaxBuffer { get; set; } //TODO: for when we do retries
             public int Timeout { get; set; }
@@ -25,11 +25,11 @@ namespace Serilog.fluentd
         private FluentdHandlerSettings Settings { get; }
         private TcpClient Client { get; set; }
         private MessagePacker MessagePacker { get; set; }
-        public byte[] queue { get; set; }
 
         private FluentdHandler(FluentdHandlerSettings settings)
         {
             this.Settings = settings;
+            this.MessagePacker = new MessagePacker(settings.Tag);
         }
 
         public static async Task<FluentdHandler> CreateHandler(string tag, FluentdHandlerSettings settings)
@@ -41,7 +41,7 @@ namespace Serilog.fluentd
 
         private async Task Connect()
         {
-            if (this.Client != null)
+            if (this.Client == null)
             {
                 this.Client = new TcpClient();
                 this.Client.SendTimeout = this.Settings.Timeout;
@@ -61,28 +61,18 @@ namespace Serilog.fluentd
 
             try
             {
-                if (this.queue != null)
+                try
                 {
-                    var temp = new byte[queue.Length + packedMessage.Length];
-                    Buffer.BlockCopy(queue, 0, temp, 0, queue.Length);
-                    Buffer.BlockCopy(packedMessage, 0, temp, queue.Length, packedMessage.Length);
-
-                    this.queue = temp;
-                    packedMessage = temp;
-                }
-
-                if (!packedMessage.Any())
-                {
-                    return;
-                }
-
-                try {
                     await Connect();
                     await this.Client.GetStream().WriteAsync(packedMessage, 0, packedMessage.Length);
                     await this.Client.GetStream().FlushAsync();
-                    queue = null;
-                } catch {
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex);
                     Disconnect();
+                    throw ex;
+
                     //TODO: Retry
                 }
             }

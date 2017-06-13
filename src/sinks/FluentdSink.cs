@@ -1,5 +1,4 @@
 using System;
-using System.Net;
 using Serilog.Core;
 using Serilog.Events;
 using Serilog.fluentd;
@@ -15,18 +14,25 @@ namespace Serilog.Sinks.SystemConsole
         {
             handler = FluentdHandler.CreateHandler("test", new FluentdHandlerSettings()
             {
-                Host = IPAddress.Parse("127.0.0.1"),
+                Host = "localhost",
                 Port = 24224,
-                MaxBuffer = 1024*1024*10
+                MaxBuffer = 1024 * 1024 * 10
             }).Result;
         }
-        
+
         public void Emit(LogEvent logEvent)
         {
             var outputProperties = OutputProperties.GetOutputProperties(logEvent);
+            try
+            {
+                handler.Emit(logEvent.RenderMessage(), outputProperties).Wait();
+            }
+            catch (Exception e)
+            {
 
-            Console.WriteLine(logEvent.ToString());
-            handler.Emit("test", "testing testing").Wait();
+                Console.Error.WriteLine(e);
+                throw e;
+            }
         }
     }
 }
