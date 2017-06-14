@@ -10,14 +10,14 @@ namespace Serilog.Sinks.SystemConsole
     class FluentdSink : ILogEventSink
     {
         private readonly FluentdHandler handler;
-        public FluentdSink()
+        public FluentdSink(string tag = "", string hostname = "localhost", int port = 24224, int timeout = 3000)
         {
             handler = FluentdHandler.CreateHandler("test", new FluentdHandlerSettings()
             {
-                Host = "localhost",
-                Port = 24224,
-                MaxBuffer = 1024 * 1024 * 10,
-                Tag = "VQ"
+                Host = hostname,
+                Port = port,
+                Tag = tag,
+                Timeout = 3000
             }).Result;
         }
 

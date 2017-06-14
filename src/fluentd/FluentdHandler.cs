@@ -4,6 +4,8 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
+using ServiceStack;
+using ServiceStack.Text;
 
 namespace Serilog.fluentd
 {
@@ -15,9 +17,7 @@ namespace Serilog.fluentd
             public string Tag { get; set; }
             public string Host { get; set; }
             public int Port { get; set; }
-            public int MaxBuffer { get; set; } //TODO: for when we do retries
             public int Timeout { get; set; }
-            public int RetryInterval { get; set; } //TODO: for when we do retries
 
         }
 
@@ -25,6 +25,10 @@ namespace Serilog.fluentd
         private FluentdHandlerSettings Settings { get; }
         private TcpClient Client { get; set; }
         private MessagePacker MessagePacker { get; set; }
+
+        private static readonly DateTime unixEpochUtc = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+
+        private const long _ticksToMilliseconds = 10000;
 
         private FluentdHandler(FluentdHandlerSettings settings)
         {
@@ -49,22 +53,32 @@ namespace Serilog.fluentd
             }
         }
 
-        public async Task Emit(string label, params object[] obj)
+        public async Task Emit(string logMessage, params object[] obj)
         {
-            var packed = MessagePacker.MakePacket(this.Settings.Tag, DateTime.Now, new object[] { label }.Concat(obj));
-            await Send(packed);
+            var messageToSend = new FluentdMessage(this.Settings.Tag, FormatDateTime(DateTime.Now), logMessage);
+            await this.Send(messageToSend);
         }
 
-        private async Task Send(byte[] packedMessage)
+        public static long FormatDateTime(DateTime value)
+        {
+            // Note: microseconds and nanoseconds should always truncated, so deviding by integral is suitable.
+            return value.ToUniversalTime().Subtract(unixEpochUtc).Ticks / _ticksToMilliseconds;
+        }
+
+        private async Task Send(FluentdMessage message)
         {
             await semaphore.WaitAsync();
 
             try
             {
+                JsConfig.ExcludeTypeInfo = true;
+                var serialized = $"[\"{this.Settings.Tag}\",{message.Message.time},{message.Message.record.ToJson()}]";
+                var encoded = serialized.ToUtf8Bytes();
                 try
                 {
                     await Connect();
-                    await this.Client.GetStream().WriteAsync(packedMessage, 0, packedMessage.Length);
+                    await this.Client.GetStream().WriteAsync(encoded, 0, encoded.Length);
+                    Console.WriteLine(System.Text.Encoding.ASCII.GetString(encoded));
                     await this.Client.GetStream().FlushAsync();
                 }
                 catch (Exception ex)
@@ -72,7 +86,6 @@ namespace Serilog.fluentd
                     Console.WriteLine(ex);
                     Disconnect();
                     throw ex;
-
                     //TODO: Retry
                 }
             }
