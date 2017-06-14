@@ -9,15 +9,10 @@ namespace sample
             var log = new LoggerConfiguration()
                 .WriteTo.Fluentd()
                 .CreateLogger();
-            log.Information("Sample Log Entry");
-            log.Information("Sample Log Entry");
-            log.Information("Sample Log Entry");
-            log.Information("Sample Log Entry");
-            log.Information("Sample Log Entry");
-            log.Information("Sample Log Entry");
-            log.Information("Sample Log Entry");
-            log.Information("Sample Log Entry");
-            log.Information("Sample Log Entry");
+
+            var info = new { RequestId = "239423049FG", Component = "Startup", Method = "Configure", Message = "I did stuff" };
+
+            log.Information("Foo.bar {@info}", info);
 
         }
     }

@@ -16,13 +16,15 @@ namespace Serilog.Sinks.SystemConsole
             {
                 Host = "localhost",
                 Port = 24224,
-                MaxBuffer = 1024 * 1024 * 10
+                MaxBuffer = 1024 * 1024 * 10,
+                Tag = "VQ"
             }).Result;
         }
 
         public void Emit(LogEvent logEvent)
         {
             var outputProperties = OutputProperties.GetOutputProperties(logEvent);
+
             try
             {
                 handler.Emit(logEvent.RenderMessage(), outputProperties).Wait();

@@ -44,6 +44,7 @@ namespace Serilog.fluentd
             }
 
             var xs = new List<MessagePackObject>();
+
             xs.Add(tag);
             var children = new List<MessagePackObject>();
             foreach (var record in records)

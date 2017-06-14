@@ -51,7 +51,7 @@ namespace Serilog.fluentd
 
         public async Task Emit(string label, params object[] obj)
         {
-            var packed = MessagePacker.MakePacket(label, DateTime.Now, obj);
+            var packed = MessagePacker.MakePacket(this.Settings.Tag, DateTime.Now, new object[] { label }.Concat(obj));
             await Send(packed);
         }
 
