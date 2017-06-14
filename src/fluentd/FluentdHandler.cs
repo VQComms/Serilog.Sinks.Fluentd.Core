@@ -52,8 +52,8 @@ namespace Serilog.fluentd
 
         public async Task Emit(string logMessage, params object[] obj)
         {
-            var messageToSend = new FluentdMessage(this.Settings.Tag, FormatDateTime(DateTime.Now), logMessage);
-            await this.Send(messageToSend);
+            var messageToSend = new FluentdMessage(logMessage);
+            await this.Send(messageToSend, FormatDateTime(DateTime.Now));
         }
 
         public static long FormatDateTime(DateTime value)
@@ -62,14 +62,14 @@ namespace Serilog.fluentd
             return value.ToUniversalTime().Subtract(unixEpochUtc).Ticks / _ticksToMilliseconds;
         }
 
-        private async Task Send(FluentdMessage message)
+        private async Task Send(FluentdMessage message, long timestamp)
         {
             await semaphore.WaitAsync();
 
             try
             {
                 JsConfig.ExcludeTypeInfo = true;
-                var serialized = $"[\"{this.Settings.Tag}\",{message.Message.time},{message.Message.record.ToJson()}]";
+                var serialized = $"[\"{this.Settings.Tag}\",{timestamp},{message.ToJson()}]";
                 var encoded = serialized.ToUtf8Bytes();
                 try
                 {
