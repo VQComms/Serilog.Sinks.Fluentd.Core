@@ -24,8 +24,6 @@ namespace Serilog.fluentd
         private readonly SemaphoreSlim semaphore = new SemaphoreSlim(1);
         private FluentdHandlerSettings Settings { get; }
         private TcpClient Client { get; set; }
-        private MessagePacker MessagePacker { get; set; }
-
         private static readonly DateTime unixEpochUtc = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 
         private const long _ticksToMilliseconds = 10000;
@@ -33,7 +31,6 @@ namespace Serilog.fluentd
         private FluentdHandler(FluentdHandlerSettings settings)
         {
             this.Settings = settings;
-            this.MessagePacker = new MessagePacker(settings.Tag);
         }
 
         public static async Task<FluentdHandler> CreateHandler(string tag, FluentdHandlerSettings settings)

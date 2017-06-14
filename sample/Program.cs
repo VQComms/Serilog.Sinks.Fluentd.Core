@@ -16,7 +16,7 @@ namespace sample
 
             var info = new { RequestId = "239423049FG", Component = "Startup", Method = "Configure", Message = "I did stuff" };
 
-            log.Information("Foo.bar {@info}", info);
+            log.Information("{@info}", info);
 
         }
     }
