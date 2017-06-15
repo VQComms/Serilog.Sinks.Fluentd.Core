@@ -3,14 +3,13 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Serilog.Events;
 using Serilog.Formatting;
 using Serilog.Formatting.Compact;
 using Serilog.Formatting.Json;
-using ServiceStack;
-using ServiceStack.Text;
 
 namespace Serilog.fluentd
 {
@@ -50,7 +49,7 @@ namespace Serilog.fluentd
                 formatter.Format(message, sw);
 
                 var serialized = $"[\"{this.Settings.Tag}\",{message.Timestamp.ToUnixTimeSeconds()},{sw.ToString()}]";
-                var encoded = serialized.ToUtf8Bytes();
+                var encoded = Encoding.UTF8.GetBytes(serialized);
 
                 try
                 {
