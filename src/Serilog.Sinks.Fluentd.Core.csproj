@@ -10,6 +10,5 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Serilog" Version="2.4.0" />
-    <PackageReference Include="Serilog.Formatting.Compact" Version="1.0.0" />
   </ItemGroup>
 </Project>
