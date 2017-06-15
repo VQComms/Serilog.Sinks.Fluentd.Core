@@ -1,6 +1,6 @@
 # Serilog.Sinks.Fluentd.Core
 
-Sends your logs to [Flunetd]()
+Sends your logs to [Fluentd]()
 
 ```csharp
 var log = new LoggerConfiguration()
