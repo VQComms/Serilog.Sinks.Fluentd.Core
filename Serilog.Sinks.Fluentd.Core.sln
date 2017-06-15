@@ -1,11 +1,15 @@
-
+﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
 VisualStudioVersion = 12.0.0.0
 MinimumVisualStudioVersion = 10.0.0.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "serilog.fluentd", "src\serilog.fluentd.csproj", "{15FE7285-6E7C-43C1-A2E8-34B73DB046E2}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "src", "src\Serilog.Sinks.Fluentd.Core.csproj", "{15FE7285-6E7C-43C1-A2E8-34B73DB046E2}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "sample", "sample\sample.csproj", "{CEA3D5DB-DAE9-41C9-8D01-91404945A923}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{86A41DA5-C2FB-488C-87AF-FF9839CEB129}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "samples", "samples", "{FC29301E-7676-47A0-9D1B-4CA2D005997E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -36,5 +40,9 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{CEA3D5DB-DAE9-41C9-8D01-91404945A923} = {FC29301E-7676-47A0-9D1B-4CA2D005997E}
+		{15FE7285-6E7C-43C1-A2E8-34B73DB046E2} = {86A41DA5-C2FB-488C-87AF-FF9839CEB129}
 	EndGlobalSection
 EndGlobal

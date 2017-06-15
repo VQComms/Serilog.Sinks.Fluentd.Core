@@ -1,11 +1,8 @@
-using System;
 using Serilog.Core;
 using Serilog.Events;
-using Serilog.fluentd;
-using Serilog.Formatting.Display;
-using static Serilog.fluentd.FluentdHandler;
+using Serilog.Sinks.Fluentd.Core.Fluentd;
 
-namespace Serilog.Sinks.SystemConsole
+namespace Serilog.Sinks.Fluentd.Core.Sinks
 {
     public class FluentdSink : ILogEventSink
     {

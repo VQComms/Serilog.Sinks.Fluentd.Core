@@ -1,8 +1,8 @@
 ﻿using System;
 using Serilog.Configuration;
-using Serilog.Sinks.SystemConsole;
+using Serilog.Sinks.Fluentd.Core.Sinks;
 
-namespace Serilog
+namespace Serilog.Sinks.Fluentd.Core
 {
     public static class FluentdLoggerConfigurationExtensions
     {

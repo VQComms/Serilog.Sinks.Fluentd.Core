@@ -1,6 +1,4 @@
-using System;
-
-namespace Serilog.fluentd
+namespace Serilog.Sinks.Fluentd.Core.Fluentd
 {
     public class FluentdHandlerSettings
     {

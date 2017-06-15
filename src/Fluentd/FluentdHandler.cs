@@ -1,17 +1,13 @@
 using System;
 using System.IO;
-using System.Linq;
-using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Serilog.Events;
-using Serilog.Formatting;
 using Serilog.Formatting.Compact;
-using Serilog.Formatting.Json;
 
-namespace Serilog.fluentd
+namespace Serilog.Sinks.Fluentd.Core.Fluentd
 {
     public class FluentdHandler : IDisposable
     {
