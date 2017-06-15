@@ -1,7 +1,18 @@
-﻿using Serilog;
+﻿using System;
+using Serilog;
 
 namespace sample
 {
+    public class LogMessage
+    {
+        public string RequestId { get; set; }
+        public string Component { get; set; }
+
+        public string Method { get; set; }
+
+        public string Message { get; set; }
+    }
+
     class Program
     {
         static void Main(string[] args)
@@ -14,10 +25,9 @@ namespace sample
                     port: 24224)
                 .CreateLogger();
 
-            var info = new { RequestId = "239423049FG", Component = "Startup", Method = "Configure", Message = "I did stuff" };
+            var info = new LogMessage { RequestId = "239423049FL", Component = "Startup", Method = "Configure", Message = "I did stuff" };
 
             log.Information("{@info}", info);
-
         }
     }
 }

@@ -1,9 +1,14 @@
 using System;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
+using Serilog.Events;
+using Serilog.Formatting;
+using Serilog.Formatting.Compact;
+using Serilog.Formatting.Json;
 using ServiceStack;
 using ServiceStack.Text;
 
@@ -11,22 +16,9 @@ namespace Serilog.fluentd
 {
     public class FluentdHandler : IDisposable
     {
-
-        public class FluentdHandlerSettings
-        {
-            public string Tag { get; set; }
-            public string Host { get; set; }
-            public int Port { get; set; }
-            public int Timeout { get; set; }
-
-        }
-
         private readonly SemaphoreSlim semaphore = new SemaphoreSlim(1);
         private FluentdHandlerSettings Settings { get; }
         private TcpClient Client { get; set; }
-        private static readonly DateTime unixEpochUtc = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-
-        private const long _ticksToMilliseconds = 10000;
 
         private FluentdHandler(FluentdHandlerSettings settings)
         {
@@ -50,45 +42,33 @@ namespace Serilog.fluentd
             }
         }
 
-        public async Task Emit(string logMessage, params object[] obj)
+        public async Task Send(LogEvent message)
         {
-            var messageToSend = new FluentdMessage(logMessage);
-            await this.Send(messageToSend, FormatDateTime(DateTime.Now));
-        }
-
-        public static long FormatDateTime(DateTime value)
-        {
-            // Note: microseconds and nanoseconds should always truncated, so deviding by integral is suitable.
-            return value.ToUniversalTime().Subtract(unixEpochUtc).Ticks / _ticksToMilliseconds;
-        }
-
-        private async Task Send(FluentdMessage message, long timestamp)
-        {
-            await semaphore.WaitAsync();
-
-            try
+            using (var sw = new StringWriter())
             {
-                JsConfig.ExcludeTypeInfo = true;
-                var serialized = $"[\"{this.Settings.Tag}\",{timestamp},{message.ToJson()}]";
+                var formatter = new CompactJsonFormatter();
+                formatter.Format(message, sw);
+
+                var serialized = $"[\"{this.Settings.Tag}\",{message.Timestamp.ToUnixTimeSeconds()},{sw.ToString()}]";
                 var encoded = serialized.ToUtf8Bytes();
+
                 try
                 {
+                    await semaphore.WaitAsync();
                     await Connect();
                     await this.Client.GetStream().WriteAsync(encoded, 0, encoded.Length);
-                    Console.WriteLine(System.Text.Encoding.ASCII.GetString(encoded));
                     await this.Client.GetStream().FlushAsync();
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine(ex);
                     Disconnect();
                     throw ex;
                     //TODO: Retry
                 }
-            }
-            finally
-            {
-                semaphore.Release();
+                finally
+                {
+                    semaphore.Release();
+                }
             }
         }
 
