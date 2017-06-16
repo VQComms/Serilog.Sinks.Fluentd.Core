@@ -4,11 +4,6 @@
     <TargetFramework>netcoreapp1.1</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\src\serilog.fluentd.csproj" />
-  </ItemGroup>
-  <ItemGroup>
-  </ItemGroup>
-  <ItemGroup>
-    <PackageReference Include="Serilog.Sinks.RollingFile" Version="3.3.0" />
+    <ProjectReference Include="..\src\Serilog.Sinks.Fluentd.Core.csproj" />
   </ItemGroup>
 </Project>

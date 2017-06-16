@@ -1,5 +1,5 @@
-﻿using System;
-using Serilog;
+﻿using Serilog;
+using Serilog.Sinks.Fluentd.Core;
 
 namespace sample
 {
