@@ -10,5 +10,6 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Serilog" Version="2.4.0" />
+    <PackageReference Include="Serilog.Sinks.PeriodicBatching" Version="2.1.1-dev-00729" />
   </ItemGroup>
 </Project>

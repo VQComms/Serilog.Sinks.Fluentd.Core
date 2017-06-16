@@ -1,22 +1,24 @@
-﻿using System;
-using Serilog.Configuration;
-using Serilog.Sinks.Fluentd.Core.Sinks;
-
-namespace Serilog.Sinks.Fluentd.Core
+﻿namespace Serilog.Sinks.Fluentd.Core
 {
+    using System;
+    using Serilog.Configuration;
+    using Serilog.Sinks.Fluentd.Core.Sinks;
+
     public static class FluentdLoggerConfigurationExtensions
     {
-        public static LoggerConfiguration Fluentd(this LoggerSinkConfiguration sinkConfiguration,
-                string tag = "",
-                string hostname = "localhost",
-                int port = 24224,
-                int timeout = 3000)
+        public static LoggerConfiguration Fluentd(this LoggerSinkConfiguration sinkConfiguration, FluentdHandlerSettings settings)
         {
             if (sinkConfiguration == null)
             {
                 throw new ArgumentNullException(nameof(sinkConfiguration));
             }
-            return sinkConfiguration.Sink(new FluentdSink(tag, hostname, port, timeout));
+
+            if (settings == null)
+            {
+                throw new ArgumentNullException(nameof(settings));
+            }
+
+            return sinkConfiguration.Sink(new FluentdSink(settings));
         }
     }
 }
