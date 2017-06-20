@@ -1,12 +1,15 @@
-﻿using System.Threading;
-using Serilog;
-using Serilog.Sinks.Fluentd.Core;
-
-namespace sample
+﻿namespace sample
 {
+    using System;
+    using System.Threading;
+    using Serilog;
+    using Serilog.Core;
+    using Serilog.Sinks.Fluentd.Core;
+
     public class LogMessage
     {
         public string RequestId { get; set; }
+
         public string Component { get; set; }
 
         public string Method { get; set; }
@@ -14,17 +17,14 @@ namespace sample
         public string Message { get; set; }
     }
 
-    class Program
+    internal class Program
     {
-        static void Main(string[] args)
+        private static void Main(string[] args)
         {
             var log = new LoggerConfiguration()
                 .WriteTo.Fluentd(new FluentdHandlerSettings
                 {
-                    Tag = "My.SampleApp",
-                    TCPSendTimeout = 4000,
-                    Host = "localhost",
-                    Port = 24224
+                    Tag = "My.SampleApp"
                 })
                 .CreateLogger();
 
@@ -32,7 +32,21 @@ namespace sample
 
             log.Information("{@info}", info);
 
+            DoSomethingThatThrows(log);
+
             Thread.Sleep(10000);
+        }
+
+        private static void DoSomethingThatThrows(Logger log)
+        {
+            try
+            {
+                throw new NullReferenceException("Ooh it broke", new ArgumentException("Busted"));
+            }
+            catch (Exception e)
+            {
+                log.Error(e, "{@info}", new LogMessage { RequestId = "239423049FL", Component = "Startup", Method = "Configure", Message = "There has been an error" });
+            }
         }
     }
 }

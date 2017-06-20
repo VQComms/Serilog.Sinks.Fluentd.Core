@@ -16,11 +16,11 @@ namespace Serilog.Sinks.Fluentd.Core.Sinks
 
     public class FluentdSink : PeriodicBatchingSink
     {
+        private readonly SemaphoreSlim semaphore = new SemaphoreSlim(1);
+
         private readonly FluentdHandlerSettings settings;
 
         public TcpClient client;
-
-        private readonly SemaphoreSlim semaphore = new SemaphoreSlim(1);
 
         public FluentdSink(FluentdHandlerSettings settings) : base(settings.BatchPostingLimit, settings.BatchingPeriod)
         {
@@ -122,8 +122,8 @@ namespace Serilog.Sinks.Fluentd.Core.Sinks
 
             if (logEvent.Exception != null)
             {
-                output.Write(",\"ex\":");
-                JsonValueFormatter.WriteQuotedJsonString(logEvent.Exception.ToString(), output);
+                output.Write(',');
+                this.WriteException(logEvent.Exception, output);
             }
 
             foreach (var property in logEvent.Properties)
@@ -138,10 +138,66 @@ namespace Serilog.Sinks.Fluentd.Core.Sinks
                 output.Write(',');
                 JsonValueFormatter.WriteQuotedJsonString(name, output);
                 output.Write(':');
-                new JsonValueFormatter(typeTagName: "$type").Format(property.Value, output);
+                new JsonValueFormatter("$type").Format(property.Value, output);
             }
 
             output.Write('}');
+        }
+
+        /// <summary>
+        /// Writes out the attached exception
+        /// </summary>
+        protected void WriteException(Exception exception, TextWriter output)
+        {
+            output.Write("\"");
+            output.Write("exceptions");
+            output.Write("\":[");
+
+            this.WriteExceptionSerializationInfo(exception, output, 0);
+            output.Write("]");
+        }
+
+        private void WriteExceptionSerializationInfo(Exception exception, TextWriter output, int depth)
+        {
+            if (depth > 0)
+            {
+                output.Write(",");
+            }
+            output.Write("{");
+            this.WriteSingleException(exception, output, depth);
+            output.Write("}");
+
+            if (exception.InnerException != null && depth < 20)
+            {
+                this.WriteExceptionSerializationInfo(exception.InnerException, output, ++depth);
+            }
+        }
+
+        /// <summary>
+        /// Writes the properties of a single exception, without inner exceptions
+        /// Callers are expected to open and close the json object themselves.
+        /// </summary>
+        /// <param name="exception"></param>
+        /// <param name="output"></param>
+        /// <param name="depth"></param>
+        protected void WriteSingleException(Exception exception, TextWriter output, int depth)
+        {
+            var helpUrl = exception.HelpLink;
+            var stackTrace = exception.StackTrace;
+            var hresult = exception.HResult;
+            var source = exception.Source;
+
+            this.WriteJsonProperty("Depth", depth, ",", output);
+            this.WriteJsonProperty("Message", exception.Message, ",", output);
+            this.WriteJsonProperty("Source", source, ",", output);
+            this.WriteJsonProperty("StackTraceString", stackTrace, ",", output);
+            this.WriteJsonProperty("HResult", hresult, ",", output);
+            this.WriteJsonProperty("HelpURL", helpUrl, "", output);
+        }
+
+        private void WriteJsonProperty(string propName, object value, string delim, TextWriter output)
+        {
+            output.Write("\"" + propName + "\":\"" + value + "\"" + delim);
         }
 
         private void Disconnect()

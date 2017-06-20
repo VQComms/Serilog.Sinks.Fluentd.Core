@@ -10,7 +10,7 @@ namespace Serilog.Sinks.Fluentd.Core
 
         public int Port { get; set; } = 24224;
 
-        public int TCPSendTimeout { get; set; } = 30000;
+        public int TCPSendTimeout { get; set; } = 3000;
 
         public TimeSpan BatchingPeriod { get; set; } = TimeSpan.FromSeconds(2);
 
