@@ -49,11 +49,20 @@ namespace Serilog.Sinks.Fluentd.Core.Sinks
             {
                 using (var sw = new StringWriter())
                 {
-                    this.Format(logEvent, sw);
+                    try
+                    {
+                        this.Format(logEvent, sw);
+                    }
+                    catch (Exception ex)
+                    {
+                        SelfLog.WriteLine(ex.ToString());
+                        continue;
+                    }
 
                     var serialized = $"[\"{this.settings.Tag}\",{logEvent.Timestamp.ToUnixTimeSeconds()},{sw}]";
                     var encoded = Encoding.UTF8.GetBytes(serialized);
                     var retryLimit = this.settings.TCPRetryAmount;
+
                     while (retryLimit > 0)
                     {
                         try
@@ -183,14 +192,17 @@ namespace Serilog.Sinks.Fluentd.Core.Sinks
         protected void WriteSingleException(Exception exception, TextWriter output, int depth)
         {
             var helpUrl = exception.HelpLink;
-            var stackTrace = exception.StackTrace;
+            var stackTrace = exception.StackTrace ?? "";
             var hresult = exception.HResult;
             var source = exception.Source;
 
             this.WriteJsonProperty("Depth", depth, ",", output);
             this.WriteJsonProperty("Message", exception.Message, ",", output);
             this.WriteJsonProperty("Source", source, ",", output);
-            this.WriteJsonProperty("StackTraceString", stackTrace, ",", output);
+            //this.WriteJsonProperty("StackTraceString", stackTrace, ",", output);
+            output.Write("\"StackTraceString\":");
+            JsonValueFormatter.WriteQuotedJsonString(stackTrace, output);
+            output.Write(",");
             this.WriteJsonProperty("HResult", hresult, ",", output);
             this.WriteJsonProperty("HelpURL", helpUrl, "", output);
         }

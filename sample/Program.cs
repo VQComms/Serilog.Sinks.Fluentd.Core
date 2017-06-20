@@ -34,7 +34,7 @@
 
             DoSomethingThatThrows(log);
 
-            Thread.Sleep(10000);
+            Thread.Sleep(60000);
         }
 
         private static void DoSomethingThatThrows(Logger log)
