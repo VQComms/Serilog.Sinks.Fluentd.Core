@@ -20,7 +20,7 @@ namespace Serilog.Sinks.Fluentd.Core.Sinks
 
         private readonly FluentdHandlerSettings settings;
 
-        public TcpClient client;
+        private TcpClient client;
 
         public FluentdSink(FluentdHandlerSettings settings) : base(settings.BatchPostingLimit, settings.BatchingPeriod)
         {
@@ -80,7 +80,7 @@ namespace Serilog.Sinks.Fluentd.Core.Sinks
                         }
                         finally
                         {
-                            semaphore.Release();
+                            this.semaphore.Release();
                             retryLimit--;
                         }
                     }
@@ -114,12 +114,12 @@ namespace Serilog.Sinks.Fluentd.Core.Sinks
             {
                 output.Write(",\"@r\":[");
                 var delim = "";
-                foreach (var r in tokensWithFormat)
+                foreach (var token in tokensWithFormat)
                 {
                     output.Write(delim);
                     delim = ",";
                     var space = new StringWriter();
-                    r.Render(logEvent.Properties, space);
+                    token.Render(logEvent.Properties, space);
                     JsonValueFormatter.WriteQuotedJsonString(space.ToString(), output);
                 }
                 output.Write(']');
@@ -199,7 +199,7 @@ namespace Serilog.Sinks.Fluentd.Core.Sinks
             this.WriteJsonProperty("Depth", depth, ",", output);
             this.WriteJsonProperty("Message", exception.Message, ",", output);
             this.WriteJsonProperty("Source", source, ",", output);
-            //this.WriteJsonProperty("StackTraceString", stackTrace, ",", output);
+
             output.Write("\"StackTraceString\":");
             JsonValueFormatter.WriteQuotedJsonString(stackTrace, output);
             output.Write(",");
@@ -219,6 +219,7 @@ namespace Serilog.Sinks.Fluentd.Core.Sinks
 
         protected override void Dispose(bool disposing)
         {
+            this.client?.Dispose();
             this.Disconnect();
 
             base.Dispose(disposing);
