@@ -214,12 +214,12 @@ namespace Serilog.Sinks.Fluentd.Core.Sinks
 
         private void Disconnect()
         {
+            this.client?.Dispose();
             this.client = null;
         }
 
         protected override void Dispose(bool disposing)
         {
-            this.client?.Dispose();
             this.Disconnect();
 
             base.Dispose(disposing);
