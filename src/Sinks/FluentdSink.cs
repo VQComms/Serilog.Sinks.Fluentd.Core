@@ -20,6 +20,8 @@ namespace Serilog.Sinks.Fluentd.Core.Sinks
 
         private readonly FluentdHandlerSettings settings;
 
+        private bool connected;
+
         private TcpClient client;
 
         public FluentdSink(FluentdHandlerSettings settings) : base(settings.BatchPostingLimit, settings.BatchingPeriod)
@@ -41,10 +43,36 @@ namespace Serilog.Sinks.Fluentd.Core.Sinks
 
             this.client = new TcpClient { SendTimeout = this.settings.TCPSendTimeout };
             await this.client.ConnectAsync(this.settings.Host, this.settings.Port);
+            this.connected = true;
         }
 
-        public async Task Send(IEnumerable<LogEvent> messages)
+        private async Task Reconnect()
         {
+            try
+            {
+                this.Disconnect();
+                await this.Connect();
+            }
+            catch (Exception ex)
+            {
+                SelfLog.WriteLine(ex.ToString());
+            }
+        }
+
+        private void Disconnect()
+        {
+            this.client?.Dispose();
+            this.client = null;
+            this.connected = false;
+        }
+
+        private async Task Send(IEnumerable<LogEvent> messages)
+        {
+            if (!this.connected)
+            {
+                await this.Connect();
+            }
+
             foreach (var logEvent in messages)
             {
                 using (var sw = new StringWriter())
@@ -67,7 +95,6 @@ namespace Serilog.Sinks.Fluentd.Core.Sinks
                     {
                         try
                         {
-                            await this.Connect();
                             await this.semaphore.WaitAsync();
                             await this.client.GetStream().WriteAsync(encoded, 0, encoded.Length);
                             await this.client.GetStream().FlushAsync();
@@ -75,7 +102,8 @@ namespace Serilog.Sinks.Fluentd.Core.Sinks
                         }
                         catch (Exception ex)
                         {
-                            this.Disconnect();
+                            await this.Reconnect();
+
                             SelfLog.WriteLine(ex.ToString());
                         }
                         finally
@@ -153,10 +181,7 @@ namespace Serilog.Sinks.Fluentd.Core.Sinks
             output.Write('}');
         }
 
-        /// <summary>
-        /// Writes out the attached exception
-        /// </summary>
-        protected void WriteException(Exception exception, TextWriter output)
+        private void WriteException(Exception exception, TextWriter output)
         {
             output.Write("\"");
             output.Write("exceptions");
@@ -173,7 +198,7 @@ namespace Serilog.Sinks.Fluentd.Core.Sinks
                 output.Write(",");
             }
             output.Write("{");
-            this.WriteSingleException(exception, output, depth);
+            WriteSingleException(exception, output, depth);
             output.Write("}");
 
             if (exception.InnerException != null && depth < 20)
@@ -182,40 +207,27 @@ namespace Serilog.Sinks.Fluentd.Core.Sinks
             }
         }
 
-        /// <summary>
-        /// Writes the properties of a single exception, without inner exceptions
-        /// Callers are expected to open and close the json object themselves.
-        /// </summary>
-        /// <param name="exception"></param>
-        /// <param name="output"></param>
-        /// <param name="depth"></param>
-        protected void WriteSingleException(Exception exception, TextWriter output, int depth)
+        private static void WriteSingleException(Exception exception, TextWriter output, int depth)
         {
             var helpUrl = exception.HelpLink;
             var stackTrace = exception.StackTrace ?? "";
             var hresult = exception.HResult;
             var source = exception.Source;
 
-            this.WriteJsonProperty("Depth", depth, ",", output);
-            this.WriteJsonProperty("Message", exception.Message, ",", output);
-            this.WriteJsonProperty("Source", source, ",", output);
+            WriteJsonProperty("Depth", depth, ",", output);
+            WriteJsonProperty("Message", exception.Message, ",", output);
+            WriteJsonProperty("Source", source, ",", output);
 
             output.Write("\"StackTraceString\":");
             JsonValueFormatter.WriteQuotedJsonString(stackTrace, output);
             output.Write(",");
-            this.WriteJsonProperty("HResult", hresult, ",", output);
-            this.WriteJsonProperty("HelpURL", helpUrl, "", output);
+            WriteJsonProperty("HResult", hresult, ",", output);
+            WriteJsonProperty("HelpURL", helpUrl, "", output);
         }
 
-        private void WriteJsonProperty(string propName, object value, string delim, TextWriter output)
+        private static void WriteJsonProperty(string propName, object value, string delim, TextWriter output)
         {
             output.Write("\"" + propName + "\":\"" + value + "\"" + delim);
-        }
-
-        private void Disconnect()
-        {
-            this.client?.Dispose();
-            this.client = null;
         }
 
         protected override void Dispose(bool disposing)
