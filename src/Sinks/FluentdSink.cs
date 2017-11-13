@@ -8,13 +8,13 @@ namespace Serilog.Sinks.Fluentd.Core.Sinks
     using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
-    using Serilog.Core;
     using Serilog.Debugging;
     using Serilog.Events;
     using Serilog.Formatting.Json;
     using Serilog.Parsing;
+    using Serilog.Sinks.PeriodicBatching;
 
-    public class FluentdSink : ILogEventSink
+    public class FluentdSink : PeriodicBatchingSink
     {
         private readonly SemaphoreSlim semaphore = new SemaphoreSlim(1);
 
@@ -22,9 +22,14 @@ namespace Serilog.Sinks.Fluentd.Core.Sinks
 
         private TcpClient client;
 
-        public FluentdSink(FluentdHandlerSettings settings)
+        public FluentdSink(FluentdHandlerSettings settings) : base(settings.BatchPostingLimit, settings.BatchingPeriod)
         {
             this.settings = settings;
+        }
+
+        protected override async Task EmitBatchAsync(IEnumerable<LogEvent> events)
+        {
+            await this.Send(events);
         }
 
         private async Task Connect()
@@ -38,43 +43,46 @@ namespace Serilog.Sinks.Fluentd.Core.Sinks
             await this.client.ConnectAsync(this.settings.Host, this.settings.Port);
         }
 
-        public void Emit(LogEvent logEvent)
+        private async Task Send(IEnumerable<LogEvent> messages)
         {
-            using (var sw = new StringWriter())
+            foreach (var logEvent in messages)
             {
-                try
-                {
-                    this.Format(logEvent, sw);
-                }
-                catch (Exception ex)
-                {
-                    SelfLog.WriteLine(ex.ToString());
-                    return;
-                }
-
-                var serialized = $"[\"{this.settings.Tag}\",{logEvent.Timestamp.ToUnixTimeSeconds()},{sw}]";
-                var encoded = Encoding.UTF8.GetBytes(serialized);
-                var retryLimit = this.settings.TCPRetryAmount;
-
-                while (retryLimit > 0)
+                using (var sw = new StringWriter())
                 {
                     try
                     {
-                        this.Connect().Wait();
-                        this.semaphore.Wait();
-                        this.client.GetStream().Write(encoded, 0, encoded.Length);
-                        this.client.GetStream().Flush();
-                        break;
+                        this.Format(logEvent, sw);
                     }
                     catch (Exception ex)
                     {
-                        this.Disconnect();
                         SelfLog.WriteLine(ex.ToString());
+                        continue;
                     }
-                    finally
+
+                    var serialized = $"[\"{this.settings.Tag}\",{logEvent.Timestamp.ToUnixTimeSeconds()},{sw}]";
+                    var encoded = Encoding.UTF8.GetBytes(serialized);
+                    var retryLimit = this.settings.TCPRetryAmount;
+
+                    while (retryLimit > 0)
                     {
-                        this.semaphore.Release();
-                        retryLimit--;
+                        try
+                        {
+                            await this.Connect();
+                            await this.semaphore.WaitAsync();
+                            await this.client.GetStream().WriteAsync(encoded, 0, encoded.Length);
+                            await this.client.GetStream().FlushAsync();
+                            break;
+                        }
+                        catch (Exception ex)
+                        {
+                            this.Disconnect();
+                            SelfLog.WriteLine(ex.ToString());
+                        }
+                        finally
+                        {
+                            this.semaphore.Release();
+                            retryLimit--;
+                        }
                     }
                 }
             }
@@ -95,7 +103,7 @@ namespace Serilog.Sinks.Fluentd.Core.Sinks
             output.Write(logEvent.Timestamp.UtcDateTime.ToString("O"));
             output.Write("\",\"ticks\":");
             output.Write(logEvent.Timestamp.UtcTicks);
-            output.Write(",\"msgtmpl\":");
+            output.Write("\",\"msgtmpl\":");
             JsonValueFormatter.WriteQuotedJsonString(logEvent.MessageTemplate.Text, output);
 
             var tokensWithFormat = logEvent.MessageTemplate.Tokens
@@ -210,6 +218,13 @@ namespace Serilog.Sinks.Fluentd.Core.Sinks
         {
             this.client?.Dispose();
             this.client = null;
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            this.Disconnect();
+
+            base.Dispose(disposing);
         }
     }
 }
