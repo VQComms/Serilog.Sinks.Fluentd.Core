@@ -9,7 +9,7 @@
     <PackageLicenseUrl>https://github.com/VQComms/Serilog.Sinks.Fluentd.Core/blob/master/LICENCE</PackageLicenseUrl>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Serilog" Version="2.4.0" />
-    <PackageReference Include="Serilog.Sinks.PeriodicBatching" Version="2.1.1-dev-00729" />
+    <PackageReference Include="Serilog" Version="2.5.0" />
+    <PackageReference Include="Serilog.Sinks.PeriodicBatching" Version="2.1.1" />
   </ItemGroup>
 </Project>

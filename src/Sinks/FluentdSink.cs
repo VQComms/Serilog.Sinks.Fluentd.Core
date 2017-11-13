@@ -43,7 +43,7 @@ namespace Serilog.Sinks.Fluentd.Core.Sinks
             await this.client.ConnectAsync(this.settings.Host, this.settings.Port);
         }
 
-        public async Task Send(IEnumerable<LogEvent> messages)
+        private async Task Send(IEnumerable<LogEvent> messages)
         {
             foreach (var logEvent in messages)
             {
@@ -101,6 +101,8 @@ namespace Serilog.Sinks.Fluentd.Core.Sinks
 
             output.Write("{\"ts\":\"");
             output.Write(logEvent.Timestamp.UtcDateTime.ToString("O"));
+            output.Write("\",\"ticks\":");
+            output.Write(logEvent.Timestamp.UtcTicks);
             output.Write("\",\"msgtmpl\":");
             JsonValueFormatter.WriteQuotedJsonString(logEvent.MessageTemplate.Text, output);
 
@@ -156,7 +158,7 @@ namespace Serilog.Sinks.Fluentd.Core.Sinks
         /// <summary>
         /// Writes out the attached exception
         /// </summary>
-        protected void WriteException(Exception exception, TextWriter output)
+        private void WriteException(Exception exception, TextWriter output)
         {
             output.Write("\"");
             output.Write("exceptions");
@@ -189,7 +191,7 @@ namespace Serilog.Sinks.Fluentd.Core.Sinks
         /// <param name="exception"></param>
         /// <param name="output"></param>
         /// <param name="depth"></param>
-        protected void WriteSingleException(Exception exception, TextWriter output, int depth)
+        private void WriteSingleException(Exception exception, TextWriter output, int depth)
         {
             var helpUrl = exception.HelpLink;
             var stackTrace = exception.StackTrace ?? "";
