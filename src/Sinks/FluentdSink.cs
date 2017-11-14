@@ -101,7 +101,7 @@ namespace Serilog.Sinks.Fluentd.Core.Sinks
 
             output.Write("{\"ts\":\"");
             output.Write(logEvent.Timestamp.UtcDateTime.ToString("O"));
-            output.Write("\",\"ticks\":");
+            output.Write("\",\"ticks\":\"");
             output.Write(logEvent.Timestamp.UtcTicks);
             output.Write("\",\"msgtmpl\":");
             JsonValueFormatter.WriteQuotedJsonString(logEvent.MessageTemplate.Text, output);
