@@ -36,10 +36,22 @@ namespace Serilog.Sinks.Fluentd.Core.Sinks
         {
             if (this.client != null)
             {
-                return;
+                if (!this.client.Connected)
+                {
+                    this.client.Dispose();
+                    this.client = null;
+                }
+                else
+                {
+                    return;
+                }
             }
 
-            this.client = new TcpClient { SendTimeout = this.settings.TCPSendTimeout };
+            this.client = new TcpClient
+            {
+                SendTimeout = this.settings.TCPSendTimeout,
+                LingerState = new LingerOption(true, this.settings.LingerTime)
+            };
             await this.client.ConnectAsync(this.settings.Host, this.settings.Port);
         }
 
@@ -94,6 +106,7 @@ namespace Serilog.Sinks.Fluentd.Core.Sinks
             {
                 throw new ArgumentNullException(nameof(logEvent));
             }
+
             if (output == null)
             {
                 throw new ArgumentNullException(nameof(output));
@@ -124,6 +137,7 @@ namespace Serilog.Sinks.Fluentd.Core.Sinks
                     token.Render(logEvent.Properties, space);
                     JsonValueFormatter.WriteQuotedJsonString(space.ToString(), output);
                 }
+
                 output.Write(']');
             }
 
@@ -174,6 +188,7 @@ namespace Serilog.Sinks.Fluentd.Core.Sinks
             {
                 output.Write(",");
             }
+
             output.Write("{");
             this.WriteSingleException(exception, output, depth);
             output.Write("}");

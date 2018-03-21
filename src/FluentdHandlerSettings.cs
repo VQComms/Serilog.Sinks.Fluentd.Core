@@ -17,5 +17,7 @@ namespace Serilog.Sinks.Fluentd.Core
         public int BatchPostingLimit { get; set; } = 50;
 
         public int TCPRetryAmount { get; set; } = 5;
+
+        public int LingerTime { get; set; } = 5;
     }
 }
