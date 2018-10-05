@@ -31,6 +31,11 @@ namespace Serilog.Sinks.Fluentd.Core.Sinks
 
         private object VisitScalarValue(ScalarValue scalar)
         {
+            if (scalar.Value is Guid)
+            {
+                return scalar.Value.ToString();
+            }
+            
             return scalar.Value;
         }
 

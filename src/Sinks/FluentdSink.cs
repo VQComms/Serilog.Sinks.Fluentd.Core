@@ -4,6 +4,8 @@ namespace Serilog.Sinks.Fluentd.Core.Sinks
     using System.Collections.Generic;
     using System.Dynamic;
     using System.IO;
+    using System.Linq;
+    using System.Net;
     using System.Net.Sockets;
     using System.Text;
     using System.Threading;
@@ -118,6 +120,7 @@ namespace Serilog.Sinks.Fluentd.Core.Sinks
             localEvent.timeStamp = logEvent.Timestamp.UtcDateTime.ToString("O");
             localEvent.ticks = logEvent.Timestamp.UtcTicks;
             localEvent.msgTmpl = logEvent.MessageTemplate.Text;
+            localEvent.msg = logEvent.RenderMessage();
             localEvent.level = logEvent.Level.ToString();
 
             if (logEvent.Exception != null)

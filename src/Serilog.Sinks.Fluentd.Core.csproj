@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>netstandard1.4</TargetFramework>
-    <VersionPrefix>1.1.0</VersionPrefix>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <VersionPrefix>1.2.0</VersionPrefix>
     <Authors>VQComms</Authors>
     <Description>A SeriLog sink for Fluentd</Description>
     <PackageTags>serilog;logging;fluentd;</PackageTags>
